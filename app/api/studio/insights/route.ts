@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getRouteErrorDetails } from "@/lib/api/route-errors";
 import { insightPromptSchema } from "@/lib/revenuecat/insight-schemas";
 import { generateInsight } from "@/lib/revenuecat/insights";
 import { z } from "zod";
@@ -16,9 +17,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(response);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Insight generation failed";
+    const { message, status } = getRouteErrorDetails(
+      error,
+      "Insight generation failed",
+    );
 
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

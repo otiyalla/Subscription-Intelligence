@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getRouteErrorDetails } from "@/lib/api/route-errors";
 import { getDashboardData } from "@/lib/revenuecat/service";
 import { dashboardSearchSchema } from "@/lib/revenuecat/schemas";
 
@@ -19,8 +20,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json(response);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Dashboard request failed";
+    const { message, status } = getRouteErrorDetails(
+      error,
+      "Dashboard request failed",
+    );
 
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

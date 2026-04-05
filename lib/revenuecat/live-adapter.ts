@@ -14,6 +14,13 @@ import type {
 } from "@/types/revenuecat";
 import { PLATFORMS, PRODUCTS, REGIONS } from "@/types/revenuecat";
 
+type RevenueCatChartName =
+  | "actives"
+  | "churn"
+  | "mrr"
+  | "revenue"
+  | "subscription_retention";
+
 function requireEnv(name: string) {
   const value = process.env[name];
 
@@ -35,10 +42,10 @@ function buildTemplatePath(
 }
 
 async function fetchRevenueCatJson(path: string, params: URLSearchParams) {
-  const baseUrl = process.env.REVENUECAT_API_BASE_URL ?? "https://api.revenuecat.com/v2";
+  const baseUrl = process.env.REVENUECAT_API_BASE_URL ?? "https://api.revenuecat.com/";
   const apiKey = requireEnv("REVENUECAT_API_KEY");
 
-  const url = new URL(path, baseUrl);
+  const url = new URL(`v2${path}`, baseUrl);
   params.forEach((value, key) => url.searchParams.set(key, value));
 
   const response = await fetch(url, {
@@ -50,10 +57,50 @@ async function fetchRevenueCatJson(path: string, params: URLSearchParams) {
   });
 
   if (!response.ok) {
-    throw new Error(`RevenueCat request failed with ${response.status}`);
+    const detail = (await response.text())
+      .replaceAll(/\s+/g, " ")
+      .trim()
+      .slice(0, 300);
+
+    throw new Error(
+      detail
+        ? `RevenueCat request failed with ${response.status}: ${detail}`
+        : `RevenueCat request failed with ${response.status}`,
+    );
   }
 
   return response.json();
+}
+
+function getRevenueCatChartPath(
+  projectId: string,
+  chartName: RevenueCatChartName,
+): string {
+  const path = buildTemplatePath(
+    process.env.REVENUECAT_CHART_PATH_TEMPLATE ??
+    "/projects/{projectId}/charts/{metric}",
+    { projectId, metric: chartName },
+  );
+  return path;
+}
+
+function getRevenueCatChartName(metric: QueryMetric): RevenueCatChartName | null {
+  switch (metric) {
+    case "revenue":
+      return "revenue";
+    case "mrr":
+      return "mrr";
+    case "subscriptions":
+      return "actives";
+    case "churn_rate":
+      return "churn";
+    case "retention_rate":
+      return "subscription_retention";
+    case "arpu":
+      return null;
+    default:
+      return "revenue";
+  }
 }
 
 function findSeriesArray(payload: unknown): Array<Record<string, unknown>> {
@@ -198,18 +245,60 @@ function valueAtIndex(
   };
 }
 
+function divideMetricSeries(
+  numerator: Array<{ date: string; value: number }>,
+  denominator: Array<{ date: string; value: number }>,
+) {
+  const denominatorByDate = new Map(
+    denominator.map((point) => [point.date, point.value]),
+  );
+
+  return numerator.map((point) => {
+    const denominatorValue = denominatorByDate.get(point.date) ?? 0;
+
+    return {
+      date: point.date,
+      value: denominatorValue > 0 ? point.value / denominatorValue : 0,
+    };
+  });
+}
+
+async function fetchLiveMetricSeries(
+  projectId: string,
+  metric: QueryMetric,
+  params: URLSearchParams,
+) {
+  const chartName = getRevenueCatChartName(metric);
+
+  if (chartName) {
+    const payload = await fetchRevenueCatJson(
+      getRevenueCatChartPath(projectId, chartName),
+      params,
+    );
+
+    return coerceMetricSeries(metric, payload);
+  }
+
+  const [revenuePayload, activesPayload] = await Promise.all([
+    fetchRevenueCatJson(getRevenueCatChartPath(projectId, "revenue"), params),
+    fetchRevenueCatJson(getRevenueCatChartPath(projectId, "actives"), params),
+  ]);
+
+  return divideMetricSeries(
+    coerceMetricSeries("revenue", revenuePayload),
+    coerceMetricSeries("subscriptions", activesPayload),
+  );
+}
+
 export async function getLiveDashboard(
   input: Omit<StudioQueryInput, "metric" | "comparePrevious">,
 ): Promise<DashboardResponse> {
   const projectId = requireEnv("REVENUECAT_PROJECT_ID");
   const overviewPath = buildTemplatePath(
     process.env.REVENUECAT_OVERVIEW_PATH_TEMPLATE ??
-      "/projects/{projectId}/metrics/overview",
+    "/projects/{projectId}/metrics/overview",
     { projectId },
   );
-  const chartPathTemplate =
-    process.env.REVENUECAT_CHART_PATH_TEMPLATE ??
-    "/projects/{projectId}/charts/{metric}";
 
   const params = new URLSearchParams({
     range: input.range,
@@ -222,27 +311,9 @@ export async function getLiveDashboard(
     const [overviewPayload, revenuePayload, subscriptionsPayload, churnPayload] =
       await Promise.all([
         fetchRevenueCatJson(overviewPath, params),
-        fetchRevenueCatJson(
-          buildTemplatePath(chartPathTemplate, {
-            projectId,
-            metric: "revenue",
-          }),
-          params,
-        ),
-        fetchRevenueCatJson(
-          buildTemplatePath(chartPathTemplate, {
-            projectId,
-            metric: "subscriptions",
-          }),
-          params,
-        ),
-        fetchRevenueCatJson(
-          buildTemplatePath(chartPathTemplate, {
-            projectId,
-            metric: "churn_rate",
-          }),
-          params,
-        ),
+        fetchRevenueCatJson(getRevenueCatChartPath(projectId, "revenue"), params),
+        fetchRevenueCatJson(getRevenueCatChartPath(projectId, "actives"), params),
+        fetchRevenueCatJson(getRevenueCatChartPath(projectId, "churn"), params),
       ]);
 
     const revenuePoints = coerceMetricSeries("revenue", revenuePayload);
@@ -266,7 +337,7 @@ export async function getLiveDashboard(
       const mrr =
         Number(
           (overviewPayload as Record<string, unknown>).mrr ??
-            (overviewPayload as Record<string, unknown>).monthly_recurring_revenue,
+          (overviewPayload as Record<string, unknown>).monthly_recurring_revenue,
         ) || point.value;
 
       return {
@@ -303,11 +374,6 @@ export async function runLiveQuery(
   input: StudioQueryInput,
 ): Promise<QueryResponse> {
   const projectId = requireEnv("REVENUECAT_PROJECT_ID");
-  const chartPath = buildTemplatePath(
-    process.env.REVENUECAT_CHART_PATH_TEMPLATE ??
-      "/projects/{projectId}/charts/{metric}",
-    { projectId, metric: input.metric },
-  );
 
   const params = new URLSearchParams({
     range: input.range,
@@ -317,8 +383,7 @@ export async function runLiveQuery(
   });
 
   try {
-    const payload = await fetchRevenueCatJson(chartPath, params);
-    const points = coerceMetricSeries(input.metric, payload);
+    const points = await fetchLiveMetricSeries(projectId, input.metric, params);
     const midpoint = Math.floor(points.length / 2);
     const currentWindow = points.slice(midpoint);
     const previousWindow = points.slice(0, midpoint);
@@ -342,7 +407,10 @@ export async function runLiveQuery(
         pointCount: points.length,
       },
       points,
-      raw: payload as Record<string, unknown>,
+      raw: {
+        liveMetric: input.metric,
+        points,
+      },
     };
   } catch (error) {
     throw new Error(normalizeError(error));
