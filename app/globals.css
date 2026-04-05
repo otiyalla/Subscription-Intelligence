@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3f6fb;
+  --foreground: #08111f;
+  --font-brand-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-brand-mono: "SFMono-Regular", "IBM Plex Mono", "Menlo", monospace;
+  --card: rgba(255, 255, 255, 0.88);
+  --card-strong: #ffffff;
+  --card-border: rgba(8, 17, 31, 0.08);
+  --muted: #5a667a;
+  --muted-soft: #ecf1f8;
+  --accent: #0f7bff;
+  --accent-strong: #0a58c5;
+  --success: #0f9f6e;
+  --warning: #f59e0b;
+  --danger: #e84545;
+  --shadow: 0 24px 80px rgba(8, 17, 31, 0.12);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-brand-sans);
+  --font-mono: var(--font-brand-mono);
+}
+
+.dark {
+  --background: #06101d;
+  --foreground: #f2f6fb;
+  --card: rgba(8, 17, 31, 0.78);
+  --card-strong: #0e1a2b;
+  --card-border: rgba(255, 255, 255, 0.1);
+  --muted: #93a4bc;
+  --muted-soft: rgba(19, 34, 55, 0.88);
+  --accent: #5fa7ff;
+  --accent-strong: #88bbff;
+  --shadow: 0 24px 80px rgba(3, 8, 16, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-brand-sans);
+  background-image:
+    radial-gradient(circle at top left, rgba(15, 123, 255, 0.14), transparent 26%),
+    radial-gradient(circle at top right, rgba(9, 172, 194, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 35%);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+::selection {
+  background: rgba(15, 123, 255, 0.2);
+}
+
+.surface {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .surface {
+    animation: surface-in 240ms ease-out;
+  }
+}
+
+.grid-fade {
+  background-image:
+    linear-gradient(rgba(138, 155, 177, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(138, 155, 177, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.text-muted {
+  color: var(--muted);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@keyframes surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

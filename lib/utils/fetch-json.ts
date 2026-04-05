@@ -1,0 +1,16 @@
+export async function fetchJson<T>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<T> {
+  const response = await fetch(input, init);
+
+  if (!response.ok) {
+    const error = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+
+    throw new Error(error?.error ?? "Request failed");
+  }
+
+  return response.json() as Promise<T>;
+}
