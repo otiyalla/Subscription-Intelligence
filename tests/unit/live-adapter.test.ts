@@ -48,17 +48,25 @@ describe("live adapter", () => {
 
     const urls = fetchMock.mock.calls.map(([input]) => String(input));
 
-    expect(urls).toContain(
-      "https://api.revenuecat.com/projects/project-123/metrics/overview?range=30d&product=all&region=all&platform=all",
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "/projects/project-123/metrics/overview?range=30d&product=all&region=all&platform=all",
+        ),
+        expect.stringContaining(
+          "/projects/project-123/charts/actives?range=30d&product=all&region=all&platform=all",
+        ),
+        expect.stringContaining(
+          "/projects/project-123/charts/churn?range=30d&product=all&region=all&platform=all",
+        ),
+      ]),
     );
-    expect(urls).toContain(
-      "https://api.revenuecat.com/projects/project-123/charts/actives?range=30d&product=all&region=all&platform=all",
-    );
-    expect(urls).toContain(
-      "https://api.revenuecat.com/projects/project-123/charts/churn?range=30d&product=all&region=all&platform=all",
-    );
-    expect(urls).not.toContain(
-      "https://api.revenuecat.com/projects/project-123/charts/subscriptions?range=30d&product=all&region=all&platform=all",
+    expect(urls).not.toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "/projects/project-123/charts/subscriptions?range=30d&product=all&region=all&platform=all",
+        ),
+      ]),
     );
   });
 

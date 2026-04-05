@@ -9,6 +9,11 @@ export default defineConfig({
   },
   webServer: {
     command: "npm run dev -- --hostname 127.0.0.1 --port 3000",
+    env: {
+      ...process.env,
+      REVENUECAT_API_KEY: "",
+      REVENUECAT_PROJECT_ID: "",
+    },
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

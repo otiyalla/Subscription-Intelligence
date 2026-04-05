@@ -1,25 +1,49 @@
 # Subscription Intelligence Studio
 
-Subscription Intelligence Studio is a polished, public-presentable take-home product for the RevenueCat Agentic AI Developer & Growth Advocate assignment. It combines a founder-friendly analytics dashboard, a developer console for request exploration, and a deterministic insight engine into one cohesive Next.js experience.
+Subscription Intelligence Studio is a polished, dual-audience analytics product built for the RevenueCat Agentic AI Developer & Growth Advocate take-home. It combines a founder-ready subscription dashboard, a developer console for request exploration, and a deterministic natural-language insight workflow in one Next.js application.
 
-## What It Includes
+The repo is packaged as a full submission, not just a working app. In addition to the product, it includes a launch blog post, a video walkthrough package, social launch drafts, a growth campaign report, a process log, normalized demo assets, and a final submission document.
 
-- Marketing landing page with live UI preview and dual-audience positioning
-- Executive dashboard with KPI cards, filters, charts, and a "what changed" panel
-- Developer console with validated request builder, JSON viewer, and copyable TypeScript and curl snippets
-- Natural-language insights page backed by deterministic prompt parsing and rule-based reasoning
-- Automatic demo mode fallback when RevenueCat credentials are absent
-- Typed fixtures, strong docs, unit/component/integration/e2e tests, and deployment-ready scripts
+
+
+## Product overview
+
+The app is designed for two audiences:
+
+- founders and growth operators who need fast signal on recurring revenue health
+- developers and AI builders who need transparent request contracts, reusable snippets, and a reliable insight layer
+
+Core capabilities:
+
+- landing page with clear founder and developer positioning
+- executive dashboard with KPI cards, filters, charts, and "what changed" context
+- developer console with validated request building, JSON output, and copyable TypeScript and `curl`
+- deterministic natural-language insights that map prompts to known metrics and evidence
+- automatic demo mode fallback when RevenueCat credentials are absent
+- unit, component, integration, and Playwright e2e coverage
 
 ## Screenshots
 
-- Screenshots are in the `docs/screenshots` folder:
-- `docs/screenshots/landing.png`
-- `docs/screenshots/dashboard.png`
-- `docs/screenshots/console.png`
-- `docs/screenshots/insights.png`
+Canonical screenshots for launch materials live in [`public/demo-assets`](./public/demo-assets/README.md).
 
-## Tech Stack
+![Landing page](./public/demo-assets/landing-page.png)
+
+![Dashboard overview](./public/demo-assets/dashboard-overview.png)
+
+![Developer console](./public/demo-assets/developer-console.png)
+
+## Routes
+
+- `/`
+- `/studio`
+- `/studio/dashboard`
+- `/studio/console`
+- `/studio/insights`
+- `/api/studio/dashboard`
+- `/api/studio/query`
+- `/api/studio/insights`
+
+## Tech stack
 
 - Next.js App Router
 - TypeScript
@@ -29,45 +53,35 @@ Subscription Intelligence Studio is a polished, public-presentable take-home pro
 - TanStack Query
 - Zod
 - React Hook Form
-- Vitest + React Testing Library
+- Vitest and React Testing Library
 - Playwright
-- ESLint + Prettier
+- ESLint and Prettier
 
-## Routes
+## Local setup
 
-- `/` landing page
-- `/studio/dashboard` executive dashboard
-- `/studio/console` developer console
-- `/studio/insights` natural-language insights
-- `/api/studio/dashboard` dashboard data endpoint
-- `/api/studio/query` developer console endpoint
-- `/api/studio/insights` deterministic insights endpoint
-
-## Local Setup
-
-1. Install dependencies:
+1. Install dependencies.
 
 ```bash
 npm install
 ```
 
-2. Copy the environment template:
+2. Copy the environment template.
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. Start the app:
+3. Start the app.
 
 ```bash
 npm run dev
 ```
 
-4. Open `http://localhost:3000`
+4. Open `http://localhost:3000`.
 
-## Environment Variables
+## Environment variables
 
-The app automatically runs in demo mode when `REVENUECAT_API_KEY` or `REVENUECAT_PROJECT_ID` is missing.
+The application automatically uses demo mode when the RevenueCat credentials are missing.
 
 ```env
 REVENUECAT_API_KEY=
@@ -78,16 +92,18 @@ REVENUECAT_CHART_PATH_TEMPLATE=/projects/{projectId}/charts/{metric}
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-## Demo Mode
+## Demo mode
 
-- Demo mode is the default local experience
-- It uses typed local fixtures that mimic subscription analytics behavior
-- All tests are designed to run against demo mode for stability
-- The studio surfaces a clear banner whenever demo mode is active
+Demo mode is the default local experience and a first-class product path.
 
-## Architecture
+- typed fixtures power all primary routes
+- the UI clearly labels when demo mode is active
+- automated tests run against deterministic demo data
+- reviewers can evaluate the product without secrets
 
-```
+## Architecture overview
+
+```text
 app/
 components/
 features/
@@ -97,15 +113,16 @@ types/
 tests/
 e2e/
 content/
+public/demo-assets/
 ```
 
-### Core Design Decisions
+Key implementation decisions:
 
-- Server-side adapters isolate RevenueCat credentials and live request logic
-- A deterministic demo adapter powers all primary product flows without secrets
-- Pages are split into focused feature modules to keep route files thin
-- Shared UI primitives keep interaction patterns consistent across marketing and app surfaces
-- The insight engine uses parsing and metric-based heuristics instead of an external LLM for reliability and testability
+- server-side adapters isolate live RevenueCat credentials
+- a demo adapter keeps every user flow available without secrets
+- feature modules keep route files thin and maintainable
+- shared UI primitives keep interaction patterns consistent
+- the insight engine uses deterministic intent mapping instead of an external LLM
 
 ## Commands
 
@@ -117,8 +134,9 @@ npm run test:e2e
 npm run build
 ```
 
-## Deployment Notes
+## Deployment notes
 
-- Deploy on Vercel or any Node-compatible platform
-- Set the RevenueCat environment variables only if live mode is desired
-- Without credentials, the deployment remains fully demoable using the local fixture layer
+- deploy on Vercel or any compatible Node environment
+- provide RevenueCat environment variables only if live mode is desired
+- without credentials, the deployed app remains demoable through the fixture layer
+
